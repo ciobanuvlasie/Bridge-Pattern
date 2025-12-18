@@ -1,0 +1,597 @@
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+import javax.swing.border.*;
+
+// ============================================
+// IMPLEMENTAREA - Dispozitivele
+// ============================================
+
+interface Device {
+    boolean isEnabled();
+    void enable();
+    void disable();
+    int getVolume();
+    void setVolume(int percent);
+    int getChannel();
+    void setChannel(int channel);
+    String getName();
+    Color getDeviceColor();
+}
+
+class TV implements Device {
+    private boolean on = false;
+    private int volume = 30;
+    private int channel = 1;
+    
+    @Override
+    public boolean isEnabled() { return on; }
+    
+    @Override
+    public void enable() {
+        on = true;
+    }
+    
+    @Override
+    public void disable() {
+        on = false;
+    }
+    
+    @Override
+    public int getVolume() { return volume; }
+    
+    @Override
+    public void setVolume(int volume) {
+        if (on) {
+            this.volume = Math.max(0, Math.min(100, volume));
+        }
+    }
+    
+    @Override
+    public int getChannel() { return channel; }
+    
+    @Override
+    public void setChannel(int channel) {
+        if (on && channel >= 1 && channel <= 999) {
+            this.channel = channel;
+        }
+    }
+    
+    @Override
+    public String getName() { return "📺 TV Samsung"; }
+    
+    @Override
+    public Color getDeviceColor() { return new Color(0, 102, 204); }
+}
+
+class Radio implements Device {
+    private boolean on = false;
+    private int volume = 50;
+    private int frequency = 881; // 88.1 FM
+    
+    @Override
+    public boolean isEnabled() { return on; }
+    
+    @Override
+    public void enable() {
+        on = true;
+    }
+    
+    @Override
+    public void disable() {
+        on = false;
+    }
+    
+    @Override
+    public int getVolume() { return volume; }
+    
+    @Override
+    public void setVolume(int volume) {
+        if (on) {
+            this.volume = Math.max(0, Math.min(100, volume));
+        }
+    }
+    
+    @Override
+    public int getChannel() { return frequency; }
+    
+    @Override
+    public void setChannel(int freq) {
+        if (on && freq >= 880 && freq <= 1080) {
+            this.frequency = freq;
+        }
+    }
+    
+    @Override
+    public String getName() { return "📻 Radio Sony"; }
+    
+    @Override
+    public Color getDeviceColor() { return new Color(255, 87, 34); }
+}
+
+class Projector implements Device {
+    private boolean on = false;
+    private int brightness = 70;
+    private int input = 1; // HDMI 1, 2, 3
+    
+    @Override
+    public boolean isEnabled() { return on; }
+    
+    @Override
+    public void enable() {
+        on = true;
+    }
+    
+    @Override
+    public void disable() {
+        on = false;
+    }
+    
+    @Override
+    public int getVolume() { return brightness; }
+    
+    @Override
+    public void setVolume(int brightness) {
+        if (on) {
+            this.brightness = Math.max(0, Math.min(100, brightness));
+        }
+    }
+    
+    @Override
+    public int getChannel() { return input; }
+    
+    @Override
+    public void setChannel(int input) {
+        if (on && input >= 1 && input <= 3) {
+            this.input = input;
+        }
+    }
+    
+    @Override
+    public String getName() { return "🎥 Proiector Epson"; }
+    
+    @Override
+    public Color getDeviceColor() { return new Color(76, 175, 80); }
+}
+
+// ============================================
+// ABSTRACȚIUNEA - Telecomenzile
+// ============================================
+
+abstract class RemoteControl {
+    protected Device device; // <- PODUL! 🌉
+    
+    public RemoteControl(Device device) {
+        this.device = device;
+    }
+    
+    public void setDevice(Device device) {
+        this.device = device;
+    }
+    
+    public abstract String getRemoteType();
+    
+    public void togglePower() {
+        if (device.isEnabled()) {
+            device.disable();
+        } else {
+            device.enable();
+        }
+    }
+    
+    public void volumeUp() {
+        device.setVolume(device.getVolume() + 5);
+    }
+    
+    public void volumeDown() {
+        device.setVolume(device.getVolume() - 5);
+    }
+    
+    public void channelUp() {
+        device.setChannel(device.getChannel() + 1);
+    }
+    
+    public void channelDown() {
+        device.setChannel(device.getChannel() - 1);
+    }
+}
+
+class BasicRemote extends RemoteControl {
+    public BasicRemote(Device device) {
+        super(device);
+    }
+    
+    @Override
+    public String getRemoteType() {
+        return "Telecomandă Simplă";
+    }
+}
+
+class AdvancedRemote extends RemoteControl {
+    public AdvancedRemote(Device device) {
+        super(device);
+    }
+    
+    @Override
+    public String getRemoteType() {
+        return "Telecomandă Avansată";
+    }
+    
+    public void mute() {
+        device.setVolume(0);
+    }
+    
+    public void setChannel(int channel) {
+        device.setChannel(channel);
+    }
+}
+
+class UniversalRemote extends RemoteControl {
+    public UniversalRemote(Device device) {
+        super(device);
+    }
+    
+    @Override
+    public String getRemoteType() {
+        return "Telecomandă Universală";
+    }
+    
+    public void mute() {
+        device.setVolume(0);
+    }
+    
+    public void setChannel(int channel) {
+        device.setChannel(channel);
+    }
+    
+    public void maxVolume() {
+        device.setVolume(100);
+    }
+    
+    public void minVolume() {
+        device.setVolume(0);
+    }
+}
+
+// ============================================
+// GUI
+// ============================================
+
+class RemoteControlGUI extends JFrame {
+    private RemoteControl remote;
+    private Device currentDevice;
+    
+    private JPanel devicePanel;
+    private JLabel deviceNameLabel;
+    private JLabel statusLabel;
+    private JLabel volumeLabel;
+    private JLabel channelLabel;
+    private JProgressBar volumeBar;
+    
+    private JButton powerButton;
+    private JPanel remotePanel;
+    
+    private final Color POWER_ON = new Color(76, 175, 80);
+    private final Color POWER_OFF = new Color(244, 67, 54);
+    
+    public RemoteControlGUI() {
+        setTitle("🎮 Telecomandă Universală - Bridge Pattern Demo");
+        setSize(800, 600);
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout(15, 15));
+        getContentPane().setBackground(new Color(250, 250, 250));
+        
+        // Inițializare
+        currentDevice = new TV();
+        remote = new BasicRemote(currentDevice);
+        
+        // Layout principal
+        JPanel mainPanel = new JPanel(new BorderLayout(15, 15));
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
+        mainPanel.setBackground(new Color(250, 250, 250));
+        
+        // TOP: Selector
+        mainPanel.add(createSelectorPanel(), BorderLayout.NORTH);
+        
+        // CENTER: Split între Device Display și Remote
+        JSplitPane splitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+        splitPane.setLeftComponent(createDevicePanel());
+        splitPane.setRightComponent(createRemotePanel());
+        splitPane.setDividerLocation(350);
+        splitPane.setBackground(new Color(250, 250, 250));
+        mainPanel.add(splitPane, BorderLayout.CENTER);
+        
+        // BOTTOM: Info Bridge Pattern
+        mainPanel.add(createInfoPanel(), BorderLayout.SOUTH);
+        
+        add(mainPanel);
+        updateDisplay();
+        setLocationRelativeTo(null);
+    }
+    
+    private JPanel createSelectorPanel() {
+        JPanel panel = new JPanel(new GridLayout(2, 1, 10, 10));
+        panel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.GRAY, 2), 
+            "⚙️ Configurare", TitledBorder.LEFT, TitledBorder.TOP, 
+            new Font("Arial", Font.BOLD, 14)));
+        panel.setBackground(Color.WHITE);
+        
+        // Row 1: Selectare dispozitiv
+        JPanel deviceRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        deviceRow.setBackground(Color.WHITE);
+        deviceRow.add(new JLabel("📱 Alege Dispozitiv:"));
+        
+        String[] devices = {"📺 TV Samsung", "📻 Radio Sony", "🎥 Proiector Epson"};
+        JComboBox<String> deviceCombo = new JComboBox<>(devices);
+        deviceCombo.setPreferredSize(new Dimension(200, 30));
+        deviceCombo.addActionListener(e -> {
+            switch (deviceCombo.getSelectedIndex()) {
+                case 0: changeDevice(new TV()); break;
+                case 1: changeDevice(new Radio()); break;
+                case 2: changeDevice(new Projector()); break;
+            }
+        });
+        deviceRow.add(deviceCombo);
+        
+        panel.add(deviceRow);
+        
+        // Row 2: Selectare telecomandă
+        JPanel remoteRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 5));
+        remoteRow.setBackground(Color.WHITE);
+        remoteRow.add(new JLabel("🎮 Alege Telecomandă:"));
+        
+        String[] remotes = {"Simplă", "Avansată", "Universală"};
+        JComboBox<String> remoteCombo = new JComboBox<>(remotes);
+        remoteCombo.setPreferredSize(new Dimension(200, 30));
+        remoteCombo.addActionListener(e -> {
+            switch (remoteCombo.getSelectedIndex()) {
+                case 0: changeRemote(new BasicRemote(currentDevice)); break;
+                case 1: changeRemote(new AdvancedRemote(currentDevice)); break;
+                case 2: changeRemote(new UniversalRemote(currentDevice)); break;
+            }
+        });
+        remoteRow.add(remoteCombo);
+        
+        panel.add(remoteRow);
+        
+        return panel;
+    }
+    
+    private JPanel createDevicePanel() {
+        devicePanel = new JPanel();
+        devicePanel.setLayout(new BoxLayout(devicePanel, BoxLayout.Y_AXIS));
+        devicePanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.GRAY, 2),
+            "📺 Display Dispozitiv", TitledBorder.LEFT, TitledBorder.TOP,
+            new Font("Arial", Font.BOLD, 14)));
+        devicePanel.setBackground(Color.WHITE);
+        
+        // Device name
+        deviceNameLabel = new JLabel("📺 TV Samsung", SwingConstants.CENTER);
+        deviceNameLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        deviceNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        devicePanel.add(Box.createVerticalStrut(20));
+        devicePanel.add(deviceNameLabel);
+        
+        // Status
+        devicePanel.add(Box.createVerticalStrut(30));
+        statusLabel = new JLabel("⚫ OPRIT", SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 20));
+        statusLabel.setForeground(POWER_OFF);
+        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        devicePanel.add(statusLabel);
+        
+        // Volume
+        devicePanel.add(Box.createVerticalStrut(40));
+        volumeLabel = new JLabel("🔊 Volum: 30", SwingConstants.CENTER);
+        volumeLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        volumeLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        devicePanel.add(volumeLabel);
+        
+        volumeBar = new JProgressBar(0, 100);
+        volumeBar.setValue(30);
+        volumeBar.setStringPainted(true);
+        volumeBar.setMaximumSize(new Dimension(250, 30));
+        volumeBar.setAlignmentX(Component.CENTER_ALIGNMENT);
+        devicePanel.add(Box.createVerticalStrut(10));
+        devicePanel.add(volumeBar);
+        
+        // Channel
+        devicePanel.add(Box.createVerticalStrut(30));
+        channelLabel = new JLabel("📡 Canal: 1", SwingConstants.CENTER);
+        channelLabel.setFont(new Font("Arial", Font.PLAIN, 18));
+        channelLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        devicePanel.add(channelLabel);
+        
+        return devicePanel;
+    }
+    
+    private JPanel createRemotePanel() {
+        remotePanel = new JPanel(new BorderLayout(10, 10));
+        remotePanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.GRAY, 2),
+            "🎮 Telecomandă Simplă", TitledBorder.LEFT, TitledBorder.TOP,
+            new Font("Arial", Font.BOLD, 14)));
+        remotePanel.setBackground(new Color(60, 60, 60));
+        
+        JPanel buttonsPanel = new JPanel(new GridBagLayout());
+        buttonsPanel.setBackground(new Color(60, 60, 60));
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(5, 5, 5, 5);
+        gbc.fill = GridBagConstraints.BOTH;
+        
+        // Power button (top center)
+        powerButton = createButton("⚡ POWER", POWER_OFF, 16);
+        powerButton.addActionListener(e -> {
+            remote.togglePower();
+            updateDisplay();
+        });
+        gbc.gridx = 1;
+        gbc.gridy = 0;
+        gbc.gridwidth = 1;
+        buttonsPanel.add(powerButton, gbc);
+        
+        // Volume buttons
+        JButton volUp = createButton("🔊+", new Color(100, 100, 100), 14);
+        volUp.addActionListener(e -> {
+            remote.volumeUp();
+            updateDisplay();
+        });
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        buttonsPanel.add(volUp, gbc);
+        
+        JButton volDown = createButton("🔉-", new Color(100, 100, 100), 14);
+        volDown.addActionListener(e -> {
+            remote.volumeDown();
+            updateDisplay();
+        });
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        buttonsPanel.add(volDown, gbc);
+        
+        // Channel buttons
+        JButton chUp = createButton("📺+", new Color(100, 100, 100), 14);
+        chUp.addActionListener(e -> {
+            remote.channelUp();
+            updateDisplay();
+        });
+        gbc.gridx = 2;
+        gbc.gridy = 1;
+        buttonsPanel.add(chUp, gbc);
+        
+        JButton chDown = createButton("📺-", new Color(100, 100, 100), 14);
+        chDown.addActionListener(e -> {
+            remote.channelDown();
+            updateDisplay();
+        });
+        gbc.gridx = 2;
+        gbc.gridy = 2;
+        buttonsPanel.add(chDown, gbc);
+        
+        // Center info
+        JLabel infoLabel = new JLabel("Basic", SwingConstants.CENTER);
+        infoLabel.setForeground(Color.WHITE);
+        infoLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        gbc.gridx = 1;
+        gbc.gridy = 1;
+        gbc.gridheight = 2;
+        buttonsPanel.add(infoLabel, gbc);
+        
+        remotePanel.add(buttonsPanel, BorderLayout.CENTER);
+        
+        return remotePanel;
+    }
+    
+    private JButton createButton(String text, Color bg, int fontSize) {
+        JButton btn = new JButton(text);
+        btn.setPreferredSize(new Dimension(100, 50));
+        btn.setBackground(bg);
+        btn.setForeground(Color.WHITE);
+        btn.setFont(new Font("Arial", Font.BOLD, fontSize));
+        btn.setFocusPainted(false);
+        btn.setBorder(BorderFactory.createRaisedBevelBorder());
+        return btn;
+    }
+    
+    private JPanel createInfoPanel() {
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBorder(BorderFactory.createTitledBorder("💡 Bridge Pattern Info"));
+        panel.setBackground(new Color(255, 252, 230));
+        
+        JLabel info1 = new JLabel("🌉 PODUL: RemoteControl folosește Device prin interfață");
+        JLabel info2 = new JLabel("✨ Poți combina ORICE telecomandă cu ORICE dispozitiv!");
+        JLabel info3 = new JLabel("📊 3 telecomenzi × 3 dispozitive = 9 combinații cu doar 6 clase!");
+        
+        info1.setFont(new Font("Arial", Font.PLAIN, 12));
+        info2.setFont(new Font("Arial", Font.PLAIN, 12));
+        info3.setFont(new Font("Arial", Font.BOLD, 12));
+        
+        panel.add(info1);
+        panel.add(info2);
+        panel.add(info3);
+        
+        return panel;
+    }
+    
+    private void changeDevice(Device newDevice) {
+        currentDevice = newDevice;
+        remote.setDevice(newDevice);
+        updateDisplay();
+    }
+    
+    private void changeRemote(RemoteControl newRemote) {
+        remote = newRemote;
+        remotePanel.setBorder(new TitledBorder(BorderFactory.createLineBorder(Color.GRAY, 2),
+            "🎮 " + remote.getRemoteType(), TitledBorder.LEFT, TitledBorder.TOP,
+            new Font("Arial", Font.BOLD, 14)));
+        updateDisplay();
+    }
+    
+    private void updateDisplay() {
+        // Update device display
+        deviceNameLabel.setText(currentDevice.getName());
+        deviceNameLabel.setForeground(currentDevice.getDeviceColor());
+        
+        if (currentDevice.isEnabled()) {
+            statusLabel.setText("🟢 PORNIT");
+            statusLabel.setForeground(POWER_ON);
+            powerButton.setBackground(POWER_ON);
+            
+            volumeLabel.setText("🔊 " + getVolumeLabel() + ": " + currentDevice.getVolume());
+            volumeBar.setValue(currentDevice.getVolume());
+            
+            channelLabel.setText("📡 " + getChannelLabel() + ": " + getChannelDisplay());
+        } else {
+            statusLabel.setText("⚫ OPRIT");
+            statusLabel.setForeground(POWER_OFF);
+            powerButton.setBackground(POWER_OFF);
+            
+            volumeLabel.setText("🔊 " + getVolumeLabel() + ": --");
+            volumeBar.setValue(0);
+            
+            channelLabel.setText("📡 " + getChannelLabel() + ": --");
+        }
+        
+        devicePanel.setBorder(new TitledBorder(
+            BorderFactory.createLineBorder(currentDevice.getDeviceColor(), 3),
+            "📺 Display Dispozitiv", TitledBorder.LEFT, TitledBorder.TOP,
+            new Font("Arial", Font.BOLD, 14)));
+    }
+    
+    private String getVolumeLabel() {
+        if (currentDevice instanceof Projector) return "Luminozitate";
+        return "Volum";
+    }
+    
+    private String getChannelLabel() {
+        if (currentDevice instanceof Radio) return "Frecvență";
+        if (currentDevice instanceof Projector) return "Input HDMI";
+        return "Canal";
+    }
+    
+    private String getChannelDisplay() {
+        if (currentDevice instanceof Radio) {
+            return (currentDevice.getChannel() / 10.0) + " FM";
+        }
+        return String.valueOf(currentDevice.getChannel());
+    }
+}
+
+// ============================================
+// MAIN
+// ============================================
+
+public class RemoteControlApp {
+    public static void main(String[] args) {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        SwingUtilities.invokeLater(() -> {
+            RemoteControlGUI app = new RemoteControlGUI();
+            app.setVisible(true);
+        });
+    }
+}

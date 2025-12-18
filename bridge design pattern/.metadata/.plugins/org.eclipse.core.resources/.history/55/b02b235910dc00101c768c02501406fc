@@ -1,0 +1,14 @@
+import java.awt.Graphics;
+
+public class Square extends Shape {
+
+    public Square(ColorBridge color) {
+        super(color);
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        g.setColor(color.getColor());
+        g.fillRect(100, 80, 120, 120);
+    }
+}

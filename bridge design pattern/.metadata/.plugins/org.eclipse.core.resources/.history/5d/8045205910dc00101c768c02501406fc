@@ -1,0 +1,14 @@
+import java.awt.Graphics;
+
+public class Circle extends Shape {
+
+    public Circle(ColorBridge color) {
+        super(color);
+    }
+
+    @Override
+    public void draw(Graphics g) {
+        g.setColor(color.getColor());
+        g.fillOval(100, 80, 120, 120);
+    }
+}

@@ -1,0 +1,13 @@
+import java.awt.Color;
+
+class RedColor implements ColorBridge {
+    public Color getColor() {
+        return Color.RED;
+    }
+}
+
+class BlueColor implements ColorBridge {
+    public Color getColor() {
+        return Color.BLUE;
+    }
+}

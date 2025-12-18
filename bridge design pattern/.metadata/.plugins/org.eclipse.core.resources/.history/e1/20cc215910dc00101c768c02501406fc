@@ -1,0 +1,11 @@
+import java.awt.Graphics;
+
+public abstract class Shape {
+    protected ColorBridge color;
+
+    public Shape(ColorBridge color) {
+        this.color = color;
+    }
+
+    public abstract void draw(Graphics g);
+}

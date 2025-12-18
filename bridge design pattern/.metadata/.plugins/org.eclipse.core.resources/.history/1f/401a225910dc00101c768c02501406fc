@@ -1,0 +1,45 @@
+import javax.swing.*;
+import java.awt.*;
+
+public class Main extends JFrame {
+
+    private DrawingPanel panel = new DrawingPanel();
+
+    public Main() {
+        setTitle("Bridge Pattern - Forme si Culori");
+        setSize(400, 350);
+        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
+
+        JButton circleRed = new JButton("Cerc Rosu");
+        JButton circleBlue = new JButton("Cerc Albastru");
+        JButton squareRed = new JButton("Patrat Rosu");
+        JButton squareBlue = new JButton("Patrat Albastru");
+
+        circleRed.addActionListener(e ->
+                panel.setShape(new Circle(new RedColor())));
+
+        circleBlue.addActionListener(e ->
+                panel.setShape(new Circle(new BlueColor())));
+
+        squareRed.addActionListener(e ->
+                panel.setShape(new Square(new RedColor())));
+
+        squareBlue.addActionListener(e ->
+                panel.setShape(new Square(new BlueColor())));
+
+        JPanel buttons = new JPanel();
+        buttons.add(circleRed);
+        buttons.add(circleBlue);
+        buttons.add(squareRed);
+        buttons.add(squareBlue);
+
+        add(panel, BorderLayout.CENTER);
+        add(buttons, BorderLayout.SOUTH);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() ->
+                new Main().setVisible(true));
+    }
+}
